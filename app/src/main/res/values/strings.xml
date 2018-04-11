@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">SSAPLurkReddit</string>
     <string name="title_activity_feed">FeedActivity</string>
+    <string name="title_activity_checked_posts">CheckedPostsActivity</string>
 </resources>

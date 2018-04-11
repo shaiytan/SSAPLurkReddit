@@ -6,14 +6,16 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
+import java.io.Serializable;
 import java.lang.reflect.Type;
 
-public class RedditPost {
+public class RedditPost implements Serializable {
     private String id;
     private String title;
     private String postHint;
     private boolean isVideo;
     private String imageLink;
+    private Boolean rate = null; //liked, disliked or not rate
 
     public RedditPost(String id, String title, String postHint, String imageLink, boolean isVideo) {
         this.id = id;
@@ -37,6 +39,14 @@ public class RedditPost {
 
     public String getImageLink() {
         return imageLink;
+    }
+
+    public Boolean getRate() {
+        return rate;
+    }
+
+    public void approve(Boolean rate) {
+        this.rate = rate;
     }
 
     public static class Deserializer implements JsonDeserializer<RedditPost> {
