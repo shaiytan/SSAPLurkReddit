@@ -23,6 +23,6 @@ public interface RedditAPI {
         return retrofit.create(RedditAPI.class);
     }
 
-    @GET("r/aww.json")
+    @GET("r/aww.json?raw_json=1")
     Call<RedditPage> getPosts(@Query("after") String after, @Query("limit") int limit);
 }

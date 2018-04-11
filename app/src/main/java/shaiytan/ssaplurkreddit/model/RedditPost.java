@@ -12,15 +12,15 @@ public class RedditPost {
     private String id;
     private String title;
     private String postHint;
-    private boolean hasVariants;
+    private boolean isVideo;
     private String imageLink;
 
-    public RedditPost(String id, String title, String postHint, String imageLink, boolean hasVariants) {
+    public RedditPost(String id, String title, String postHint, String imageLink, boolean isVideo) {
         this.id = id;
         this.title = title;
         this.postHint = postHint;
         this.imageLink = imageLink;
-        this.hasVariants = hasVariants;
+        this.isVideo = isVideo;
     }
 
     public String getId() {
@@ -32,7 +32,7 @@ public class RedditPost {
     }
 
     public boolean isImage() {
-        return postHint.equals("image") && !hasVariants;
+        return postHint.equals("image") && !isVideo;
     }
 
     public String getImageLink() {
@@ -46,18 +46,23 @@ public class RedditPost {
             JsonObject child = json.getAsJsonObject();
             JsonObject data = child.getAsJsonObject("data");
             String id = data.get("id").getAsString();
-            String postHint = data.get("post_hint").getAsString();
             String title = data.get("title").getAsString();
 
             JsonObject preview = data.getAsJsonObject("preview");
             JsonObject image = preview.getAsJsonArray("images")
                     .get(0)
                     .getAsJsonObject();
-            JsonObject source = image.getAsJsonObject("source");
-            String url = source.get("url").getAsString();
-            int variantsSize = image.getAsJsonObject("variants").size();
 
-            return new RedditPost(id, title, postHint, url, variantsSize > 0);
+            JsonObject source = image.getAsJsonArray("resolutions")
+                    .get(1)
+                    .getAsJsonObject();
+            String url = source.get("url").getAsString();
+
+            //strange json structure, need find out videos and gifs
+            String postHint = data.get("post_hint").getAsString();
+            int variantsSize = image.getAsJsonObject("variants").size();
+            //boolean isVideo = data.getAsJsonPrimitive("is_video").getAsBoolean();
+            return new RedditPost(id, title, postHint, url, variantsSize > 0);// || isVideo);
         }
     }
 }
