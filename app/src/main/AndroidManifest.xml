@@ -24,7 +24,9 @@
         <activity
             android:name=".view.CheckedPostsActivity"
             android:label="@string/title_activity_checked_posts"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:parentActivityName=".view.FeedActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".view.LoginActivity"></activity>
     </application>
 
 </manifest>

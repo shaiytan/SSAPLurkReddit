@@ -23,13 +23,19 @@ public class CheckedPostsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_feed);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         RecyclerView feed = findViewById(R.id.feed_list);
         feed.setLayoutManager(new LinearLayoutManager(this));
         List<RedditPost> likedPosts = (List<RedditPost>) getIntent().getSerializableExtra(LIKED_POSTS);
         List<RedditPost> dislikedPosts = (List<RedditPost>) getIntent().getSerializableExtra(DISLIKED_POSTS);
         List<RedditPost> all = new LinkedList<>(likedPosts);
         all.addAll(dislikedPosts);
-        feed.setAdapter(new FeedAdapter(this, all, R.layout.item_checked_posts));
+        feed.setAdapter(new PostsAdapter(this, all, R.layout.item_checked_posts));
     }
 
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
+    }
 }

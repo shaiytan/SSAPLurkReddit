@@ -16,12 +16,12 @@ import java.util.List;
 import shaiytan.ssaplurkreddit.R;
 import shaiytan.ssaplurkreddit.model.RedditPost;
 
-public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
+public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> {
     private Context context;
     private List<RedditPost> data;
     private int layout;
 
-    public FeedAdapter(Context context, List<RedditPost> data, int layout) {
+    public PostsAdapter(Context context, List<RedditPost> data, int layout) {
         this.context = context;
         this.data = data;
         this.layout = layout;
