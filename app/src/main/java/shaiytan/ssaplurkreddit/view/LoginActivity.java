@@ -1,6 +1,7 @@
 package shaiytan.ssaplurkreddit.view;
 
 import android.content.Intent;
+import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SwitchCompat;
@@ -9,28 +10,23 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import shaiytan.ssaplurkreddit.R;
+import shaiytan.ssaplurkreddit.app.LurkRedditApplication;
+import shaiytan.ssaplurkreddit.db.User;
+import shaiytan.ssaplurkreddit.db.UsersDAO;
 
 public class LoginActivity extends AppCompatActivity {
-    public static final String REGISTER = "Register";
-    public static final String SIGN_IN = "Sign In";
-    private final Map<String, String> users = new HashMap<>();
+    public static final String RESULT_LOGIN = "login";
+    public static final String RESULT_ID = "uid";
+
+    private static final String REGISTER = "Register";
+    private static final String SIGN_IN = "Sign In";
+
     private EditText usernameView;
     private EditText passwordView;
-    private SwitchCompat registerSwitch;
     private String action;
     private Button submit;
-    private String username;
-    private String password;
-
-    {
-        users.put("vasya", "1234");
-        users.put("petya", "qwerty");
-        users.put("slavka", "jsforever");
-    }
+    private UsersDAO users;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,13 +36,14 @@ public class LoginActivity extends AppCompatActivity {
         submit = findViewById(R.id.btn_sign_in);
         usernameView = findViewById(R.id.et_username);
         passwordView = findViewById(R.id.et_password);
-        registerSwitch = findViewById(R.id.register_switch);
-        registerSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> checkMode());
-        checkMode();
+        SwitchCompat registerSwitch = findViewById(R.id.register_switch);
+        setMode(registerSwitch.isChecked());
+        registerSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> setMode(isChecked));
+        users = LurkRedditApplication.getDB().usersDAO();
     }
 
-    private void checkMode() {
-        action = registerSwitch.isChecked() ? REGISTER : SIGN_IN;
+    private void setMode(boolean register) {
+        action = register ? REGISTER : SIGN_IN;
         setTitle(action);
         submit.setText(action);
         usernameView.setText("");
@@ -54,28 +51,35 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void onSubmit(View view) {
-        username = usernameView.getText().toString();
-        password = passwordView.getText().toString();
+        String username = usernameView.getText().toString();
+        String password = passwordView.getText().toString();
         switch (action) {
             case REGISTER:
-                if (users.containsKey(username))
-                    Toast.makeText(this, "Choose another username", Toast.LENGTH_SHORT).show();
-                else {
-                    users.put(username, password);
-                    finishSuccess();
+                try {
+                    long id = users.insertUser(new User(username, password));
+                    finishSuccess(id, username);
+                } catch (SQLiteException e) {
+                    Toast.makeText(
+                            this,
+                            "User with such login exists. Choose a different one",
+                            Toast.LENGTH_SHORT)
+                            .show();
                 }
+
                 break;
             case SIGN_IN:
-                String pass = users.get(username);
-                if (pass != null && password.equals(pass)) finishSuccess();
+                User user = users.findUserByLogin(username);
+                if (user != null && password.equals(user.getPassword()))
+                    finishSuccess(user.getId(), username);
                 else Toast.makeText(this, "Wrong username or password", Toast.LENGTH_SHORT).show();
                 break;
         }
     }
 
-    private void finishSuccess() {
+    private void finishSuccess(long id, String login) {
         Intent intent = new Intent();
-        intent.putExtra("username", username);
+        intent.putExtra(RESULT_LOGIN, login);
+        intent.putExtra(RESULT_ID, id);
         setResult(RESULT_OK, intent);
         finish();
     }

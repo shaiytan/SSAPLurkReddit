@@ -57,7 +57,7 @@ public class FeedActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_CANCELED) finish();
         if (resultCode == RESULT_OK) {
-            String username = data.getStringExtra("username");
+            String username = data.getStringExtra(LoginActivity.RESULT_LOGIN);
             setTitle("Hi, " + username + "! It's AWW subreddit");
             RecyclerView feed = findViewById(R.id.feed_list);
             feed.setLayoutManager(new LinearLayoutManager(this));
