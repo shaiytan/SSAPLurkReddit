@@ -59,20 +59,23 @@ public class RedditPost implements Serializable {
             String title = data.get("title").getAsString();
 
             JsonObject preview = data.getAsJsonObject("preview");
-            JsonObject image = preview.getAsJsonArray("images")
-                    .get(0)
-                    .getAsJsonObject();
+            String url = null;
+            boolean isVideo = true;
+            if (preview != null) {
+                JsonObject image = preview.getAsJsonArray("images")
+                        .get(0)
+                        .getAsJsonObject();
+                JsonObject source = image.getAsJsonArray("resolutions")
+                        .get(1)
+                        .getAsJsonObject();
 
-            JsonObject source = image.getAsJsonArray("resolutions")
-                    .get(1)
-                    .getAsJsonObject();
-            String url = source.get("url").getAsString();
+                url = source.get("url").getAsString();
+                isVideo = image.getAsJsonObject("variants").size() > 0;
+            }
 
-            //strange json structure, need find out videos and gifs
-            String postHint = data.get("post_hint").getAsString();
-            int variantsSize = image.getAsJsonObject("variants").size();
-            //boolean isVideo = data.getAsJsonPrimitive("is_video").getAsBoolean();
-            return new RedditPost(id, title, postHint, url, variantsSize > 0);// || isVideo);
+            JsonElement postHintElement = data.get("post_hint");
+            String postHint = postHintElement != null ? postHintElement.getAsString() : "no_image";
+            return new RedditPost(id, title, postHint, url, isVideo);
         }
     }
 }
