@@ -6,16 +6,16 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import shaiytan.ssaplurkreddit.R;
-import shaiytan.ssaplurkreddit.model.RedditPost;
+import shaiytan.ssaplurkreddit.app.LurkRedditApplication;
+import shaiytan.ssaplurkreddit.db.Post;
+import shaiytan.ssaplurkreddit.db.PostsDAO;
+import shaiytan.ssaplurkreddit.view.help.CheckedPostsAdapter;
 
 public class CheckedPostsActivity extends AppCompatActivity {
-
-    public static final String LIKED_POSTS = "likedposts";
-    public static final String DISLIKED_POSTS = "dislikedposts";
+    public static final String USER_ID = "user_id";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,11 +26,10 @@ public class CheckedPostsActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         RecyclerView feed = findViewById(R.id.feed_list);
         feed.setLayoutManager(new LinearLayoutManager(this));
-        List<RedditPost> likedPosts = (List<RedditPost>) getIntent().getSerializableExtra(LIKED_POSTS);
-        List<RedditPost> dislikedPosts = (List<RedditPost>) getIntent().getSerializableExtra(DISLIKED_POSTS);
-        List<RedditPost> all = new LinkedList<>(likedPosts);
-        all.addAll(dislikedPosts);
-        feed.setAdapter(new PostsAdapter(this, all, R.layout.item_checked_posts));
+        PostsDAO posts = LurkRedditApplication.getDB().postsDAO();
+        long idUser = getIntent().getLongExtra(USER_ID, -1);
+        List<Post> postsByUser = posts.getPostsByUser(idUser);
+        feed.setAdapter(new CheckedPostsAdapter(this, postsByUser));
     }
 
     @Override

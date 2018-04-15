@@ -4,7 +4,7 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
 
-@Entity(tableName = "users", indices = {@Index(value = "login", unique = true)})
+@Entity(tableName = "users", indices = @Index(value = "login", unique = true))
 public class User {
     @PrimaryKey(autoGenerate = true)
     private long id;

@@ -13,17 +13,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import shaiytan.ssaplurkreddit.R;
 import shaiytan.ssaplurkreddit.app.LurkRedditApplication;
+import shaiytan.ssaplurkreddit.db.Post;
+import shaiytan.ssaplurkreddit.db.PostsDAO;
 import shaiytan.ssaplurkreddit.model.RedditAPI;
 import shaiytan.ssaplurkreddit.model.RedditPage;
 import shaiytan.ssaplurkreddit.model.RedditPost;
+import shaiytan.ssaplurkreddit.view.help.PostsAdapter;
+import shaiytan.ssaplurkreddit.view.help.SwipeHelper;
 
 public class FeedActivity
         extends AppCompatActivity {
@@ -33,12 +38,10 @@ public class FeedActivity
     public static final String PREF_LOGIN = "current_login";
     public static final String PREF_ID = "current_id";
 
-    List<RedditPost> liked = new LinkedList<>();
-    List<RedditPost> disliked = new LinkedList<>();
-
     private RecyclerView feed;
 
     private SharedPreferences preferences;
+    private PostsDAO posts;
 
     private long currentUserId;
     private String currentUserName;
@@ -51,6 +54,7 @@ public class FeedActivity
         setSupportActionBar(toolbar);
         feed = findViewById(R.id.feed_list);
         feed.setLayoutManager(new LinearLayoutManager(this));
+        posts = LurkRedditApplication.getDB().postsDAO();
         preferences = getSharedPreferences(SESSION_PREF, MODE_PRIVATE);
         if (preferences.contains(PREF_LOGIN)) {
             loadSession();
@@ -68,7 +72,9 @@ public class FeedActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_item_list:
-                showCheckedPosts();
+                Intent intent = new Intent(this, CheckedPostsActivity.class);
+                intent.putExtra(CheckedPostsActivity.USER_ID, currentUserId);
+                startActivity(intent);
                 break;
             case R.id.menu_item_logout:
                 logOut();
@@ -117,13 +123,6 @@ public class FeedActivity
         startActivityForResult(intent, LOGIN_REQUEST);
     }
 
-    private void showCheckedPosts() {
-        Intent intent = new Intent(this, CheckedPostsActivity.class);
-        intent.putExtra(CheckedPostsActivity.LIKED_POSTS, (LinkedList) liked);
-        intent.putExtra(CheckedPostsActivity.DISLIKED_POSTS, (LinkedList) disliked);
-        startActivity(intent);
-    }
-
     private void loadFeed() {
         RedditAPI api = LurkRedditApplication.getAPI();
         api.getPosts("", 25).enqueue(new Callback<RedditPage>() {
@@ -131,11 +130,13 @@ public class FeedActivity
             public void onResponse(@NonNull Call<RedditPage> call, @NonNull Response<RedditPage> response) {
                 RedditPage page = response.body();
                 if (page != null) {
-                    LinkedList<RedditPost> posts = new LinkedList<>();
+                    Set<String> viewed = new HashSet<>(posts.getViewedPostsId(currentUserId));
+                    LinkedList<RedditPost> filteredPosts = new LinkedList<>();
                     for (RedditPost post : page.getChildren()) {
-                        if (post.isImage()) posts.add(post);
+                        if (post.isImage() && !viewed.contains(post.getId()))
+                            filteredPosts.add(post);
                     }
-                    feed.setAdapter(new PostsAdapter(FeedActivity.this, posts, R.layout.item_feed));
+                    feed.setAdapter(new PostsAdapter(FeedActivity.this, filteredPosts));
                 }
             }
 
@@ -150,18 +151,15 @@ public class FeedActivity
     public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
         PostsAdapter adapter = (PostsAdapter) feed.getAdapter();
         RedditPost post = adapter.pullItem(viewHolder.getAdapterPosition());
-        List<RedditPost> list;
-        if (direction == ItemTouchHelper.RIGHT) {
-            list = liked;
-            post.approve(true);
-        } else {
-            list = disliked;
-            post.approve(false);
-        }
-        list.add(post);
-        Toast.makeText(FeedActivity.this,
-                "Liked:" + liked.size() + ", Disliked:" + disliked.size(),
-                Toast.LENGTH_SHORT)
-                .show();
+        boolean approved = direction == ItemTouchHelper.RIGHT;
+        Post savePost = new Post(
+                post.getId(),
+                currentUserId,
+                post.getTitle(),
+                post.getImageLink(),
+                approved
+        );
+        Toast.makeText(this, approved ? "Liked" : "Disliked", Toast.LENGTH_SHORT).show();
+        posts.insertPost(savePost);
     }
 }

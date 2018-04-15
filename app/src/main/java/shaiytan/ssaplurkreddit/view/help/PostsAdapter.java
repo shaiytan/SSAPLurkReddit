@@ -1,4 +1,4 @@
-package shaiytan.ssaplurkreddit.view;
+package shaiytan.ssaplurkreddit.view.help;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -19,19 +19,17 @@ import shaiytan.ssaplurkreddit.model.RedditPost;
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> {
     private Context context;
     private List<RedditPost> data;
-    private int layout;
 
-    public PostsAdapter(Context context, List<RedditPost> data, int layout) {
+    public PostsAdapter(Context context, List<RedditPost> data) {
         this.context = context;
         this.data = data;
-        this.layout = layout;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context)
-                .inflate(layout, parent, false);
+                .inflate(R.layout.item_feed, parent, false);
         return new ViewHolder(view);
     }
 
@@ -42,11 +40,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
         Picasso.with(context)
                 .load(post.getImageLink())
                 .into(holder.image);
-        if (holder.approved != null) {
-            int resource = post.getRate() ? R.drawable.liked : R.drawable.disliked;
-            holder.approved.setImageResource(resource);
-        }
-
     }
 
     @Override
@@ -64,13 +57,11 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
     static class ViewHolder extends RecyclerView.ViewHolder {
         private TextView title;
         private ImageView image;
-        private ImageView approved;
 
         ViewHolder(View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.item_title);
             image = itemView.findViewById(R.id.item_image);
-            approved = itemView.findViewById(R.id.item_approved);
         }
     }
 }

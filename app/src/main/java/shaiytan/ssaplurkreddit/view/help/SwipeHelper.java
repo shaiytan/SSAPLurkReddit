@@ -1,4 +1,4 @@
-package shaiytan.ssaplurkreddit.view;
+package shaiytan.ssaplurkreddit.view.help;
 
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
