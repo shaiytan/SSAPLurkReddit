@@ -39,6 +39,8 @@ public class FeedActivity
     public static final String PREF_ID = "current_id";
 
     private RecyclerView feed;
+    private PostsAdapter regularAdapter;
+    private PostsAdapter errorAdapter;
     private ItemTouchHelper swipeHelper;
 
     private SharedPreferences preferences;
@@ -46,6 +48,7 @@ public class FeedActivity
 
     private long currentUserId;
     private String currentUserName;
+    private String nextPage = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +56,11 @@ public class FeedActivity
         setContentView(R.layout.activity_feed);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        regularAdapter = PostsAdapter.empty(this, v -> loadFeed());
+        errorAdapter = PostsAdapter.error(this);
         feed = findViewById(R.id.feed_list);
         feed.setLayoutManager(new LinearLayoutManager(this));
+        feed.setAdapter(regularAdapter);
         swipeHelper = new ItemTouchHelper(new SwipeHelper(this::onSwiped));
         posts = LurkRedditApplication.getDB().postsDAO();
         preferences = getSharedPreferences(SESSION_PREF, MODE_PRIVATE);
@@ -93,6 +99,8 @@ public class FeedActivity
             currentUserName = data.getStringExtra(LoginActivity.RESULT_LOGIN);
             saveSession();
             setTitle("Hi, " + currentUserName + "! It's AWW subreddit");
+            if (regularAdapter.getItemCount() > 1)
+                regularAdapter = PostsAdapter.empty(this, v -> loadFeed());
             loadFeed();
         }
     }
@@ -127,18 +135,20 @@ public class FeedActivity
 
     private void loadFeed() {
         RedditAPI api = LurkRedditApplication.getAPI();
-        api.getPosts("", 25).enqueue(new Callback<RedditPage>() {
+        api.getPosts(nextPage, 25).enqueue(new Callback<RedditPage>() {
             @Override
             public void onResponse(@NonNull Call<RedditPage> call, @NonNull Response<RedditPage> response) {
                 RedditPage page = response.body();
                 if (page != null) {
+                    nextPage = page.getAfter();
                     Set<String> viewed = new HashSet<>(posts.getViewedPostsId(currentUserId));
                     LinkedList<RedditPost> filteredPosts = new LinkedList<>();
                     for (RedditPost post : page.getChildren()) {
                         if (post.isImage() && !viewed.contains(post.getId()))
                             filteredPosts.add(post);
                     }
-                    feed.setAdapter(new PostsAdapter(FeedActivity.this, filteredPosts));
+                    regularAdapter.insertItems(filteredPosts);
+                    if (feed.getAdapter() != regularAdapter) feed.setAdapter(regularAdapter);
                     swipeHelper.attachToRecyclerView(feed);
                 }
             }
@@ -147,7 +157,7 @@ public class FeedActivity
             public void onFailure(@NonNull Call<RedditPage> call, @NonNull Throwable t) {
                 Toast.makeText(FeedActivity.this, "Cannot load((9:" + t.getMessage(), Toast.LENGTH_SHORT).show();
                 swipeHelper.attachToRecyclerView(null);
-                feed.setAdapter(PostsAdapter.error(FeedActivity.this));
+                feed.setAdapter(errorAdapter);
             }
         });
     }
