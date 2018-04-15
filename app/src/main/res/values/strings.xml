@@ -3,4 +3,5 @@
     <string name="title_activity_feed">SSAPLurkReddit</string>
     <string name="title_activity_checked_posts">Your Checked Posts</string>
     <string name="title_activity_login">Login/Register</string>
+    <string name="no_internet_message">Check your internet connection. I cannot load feed without network. Also images from your checked posts may not be cached((9</string>
 </resources>

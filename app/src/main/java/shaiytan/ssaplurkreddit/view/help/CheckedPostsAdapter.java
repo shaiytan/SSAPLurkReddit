@@ -39,6 +39,7 @@ public class CheckedPostsAdapter extends RecyclerView.Adapter<CheckedPostsAdapte
         holder.title.setText(post.getTitle());
         Picasso.with(context)
                 .load(post.getImageLink())
+                .error(R.drawable.not_cashed)
                 .into(holder.image);
         int resource = post.isApproved() ? R.drawable.liked : R.drawable.disliked;
         holder.approved.setImageResource(resource);

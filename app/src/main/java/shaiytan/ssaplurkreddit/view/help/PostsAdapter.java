@@ -64,4 +64,25 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
             image = itemView.findViewById(R.id.item_image);
         }
     }
+
+    public static PostsAdapter error(Context context) {
+        return new ErrorAdapter(context);
+    }
+
+    private static class ErrorAdapter extends PostsAdapter {
+        private ErrorAdapter(Context context) {
+            super(context, null);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            holder.image.setImageResource(R.drawable.no_internet);
+            holder.title.setText(R.string.no_internet_message);
+        }
+
+        @Override
+        public int getItemCount() {
+            return 1;
+        }
+    }
 }

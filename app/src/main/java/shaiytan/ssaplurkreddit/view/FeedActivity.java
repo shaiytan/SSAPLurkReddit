@@ -39,6 +39,7 @@ public class FeedActivity
     public static final String PREF_ID = "current_id";
 
     private RecyclerView feed;
+    private ItemTouchHelper swipeHelper;
 
     private SharedPreferences preferences;
     private PostsDAO posts;
@@ -54,6 +55,7 @@ public class FeedActivity
         setSupportActionBar(toolbar);
         feed = findViewById(R.id.feed_list);
         feed.setLayoutManager(new LinearLayoutManager(this));
+        swipeHelper = new ItemTouchHelper(new SwipeHelper(this::onSwiped));
         posts = LurkRedditApplication.getDB().postsDAO();
         preferences = getSharedPreferences(SESSION_PREF, MODE_PRIVATE);
         if (preferences.contains(PREF_LOGIN)) {
@@ -137,15 +139,17 @@ public class FeedActivity
                             filteredPosts.add(post);
                     }
                     feed.setAdapter(new PostsAdapter(FeedActivity.this, filteredPosts));
+                    swipeHelper.attachToRecyclerView(feed);
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<RedditPage> call, @NonNull Throwable t) {
                 Toast.makeText(FeedActivity.this, "Cannot load((9:" + t.getMessage(), Toast.LENGTH_SHORT).show();
+                swipeHelper.attachToRecyclerView(null);
+                feed.setAdapter(PostsAdapter.error(FeedActivity.this));
             }
         });
-        new ItemTouchHelper(new SwipeHelper(this::onSwiped)).attachToRecyclerView(feed);
     }
 
     public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
