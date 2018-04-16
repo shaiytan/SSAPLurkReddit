@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -42,6 +43,7 @@ public class FeedActivity
     private PostsAdapter regularAdapter;
     private PostsAdapter errorAdapter;
     private ItemTouchHelper swipeHelper;
+    private SwipeRefreshLayout pullRefresh;
 
     private SharedPreferences preferences;
     private PostsDAO posts;
@@ -56,18 +58,25 @@ public class FeedActivity
         setContentView(R.layout.activity_feed);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        regularAdapter = PostsAdapter.empty(this, v -> loadFeed());
         errorAdapter = PostsAdapter.error(this);
         feed = findViewById(R.id.feed_list);
         feed.setLayoutManager(new LinearLayoutManager(this));
-        feed.setAdapter(regularAdapter);
         swipeHelper = new ItemTouchHelper(new SwipeHelper(this::onSwiped));
+        pullRefresh = findViewById(R.id.refresh);
+        pullRefresh.setOnRefreshListener(this::onRefresh);
         posts = LurkRedditApplication.getDB().postsDAO();
         preferences = getSharedPreferences(SESSION_PREF, MODE_PRIVATE);
         if (preferences.contains(PREF_LOGIN)) {
             loadSession();
-            loadFeed();
+            onRefresh();
         } else showLoginForm();
+    }
+
+    private void onRefresh() {
+        nextPage = "";
+        regularAdapter = PostsAdapter.empty(this, v -> loadFeed());
+        pullRefresh.setRefreshing(true);
+        loadFeed();
     }
 
     @Override
@@ -99,9 +108,7 @@ public class FeedActivity
             currentUserName = data.getStringExtra(LoginActivity.RESULT_LOGIN);
             saveSession();
             setTitle("Hi, " + currentUserName + "! It's AWW subreddit");
-            if (regularAdapter.getItemCount() > 1)
-                regularAdapter = PostsAdapter.empty(this, v -> loadFeed());
-            loadFeed();
+            onRefresh();
         }
     }
 
@@ -151,6 +158,7 @@ public class FeedActivity
                     if (feed.getAdapter() != regularAdapter) feed.setAdapter(regularAdapter);
                     swipeHelper.attachToRecyclerView(feed);
                 }
+                pullRefresh.setRefreshing(false);
             }
 
             @Override
@@ -158,6 +166,7 @@ public class FeedActivity
                 Toast.makeText(FeedActivity.this, "Cannot load((9:" + t.getMessage(), Toast.LENGTH_SHORT).show();
                 swipeHelper.attachToRecyclerView(null);
                 feed.setAdapter(errorAdapter);
+                pullRefresh.setRefreshing(false);
             }
         });
     }
