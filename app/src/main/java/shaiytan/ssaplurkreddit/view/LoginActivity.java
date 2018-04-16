@@ -53,27 +53,30 @@ public class LoginActivity extends AppCompatActivity {
     public void onSubmit(View view) {
         String username = usernameView.getText().toString();
         String password = passwordView.getText().toString();
-        switch (action) {
-            case REGISTER:
-                try {
-                    long id = users.insertUser(new User(username, password));
-                    finishSuccess(id, username);
-                } catch (SQLiteException e) {
-                    Toast.makeText(
-                            this,
-                            "User with such login exists. Choose a different one",
-                            Toast.LENGTH_SHORT)
-                            .show();
-                }
-
-                break;
-            case SIGN_IN:
-                User user = users.findUserByLogin(username);
-                if (user != null && password.equals(user.getPassword()))
-                    finishSuccess(user.getId(), username);
-                else Toast.makeText(this, "Wrong username or password", Toast.LENGTH_SHORT).show();
-                break;
-        }
+        if (username.isEmpty() || password.isEmpty())
+            Toast.makeText(this, "Don't leave fields empty", Toast.LENGTH_SHORT).show();
+        else
+            switch (action) {
+                case REGISTER:
+                    try {
+                        long id = users.insertUser(new User(username, password));
+                        finishSuccess(id, username);
+                    } catch (SQLiteException e) {
+                        Toast.makeText(
+                                this,
+                                "User with such login exists. Choose a different one.",
+                                Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                    break;
+                case SIGN_IN:
+                    User user = users.findUserByLogin(username);
+                    if (user != null && password.equals(user.getPassword()))
+                        finishSuccess(user.getId(), username);
+                    else
+                        Toast.makeText(this, "Wrong username or password.", Toast.LENGTH_SHORT).show();
+                    break;
+            }
     }
 
     private void finishSuccess(long id, String login) {

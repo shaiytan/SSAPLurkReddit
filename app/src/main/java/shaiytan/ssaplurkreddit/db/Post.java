@@ -3,6 +3,7 @@ package shaiytan.ssaplurkreddit.db;
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.ForeignKey;
+import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
 
 @Entity(tableName = "posts",
@@ -20,16 +21,17 @@ public class Post {
 
     @ColumnInfo(name = "id_reddit")
     private String idReddit;
-    @ColumnInfo(name = "id_user")
+    @ColumnInfo(name = "id_user", index = true)
     private long idUser;
     private String title;
     @ColumnInfo(name = "image_link")
     private String imageLink;
     private boolean approved;
 
-    public Post() {
+    Post() {
     }
 
+    @Ignore
     public Post(String idReddit, long idUser, String title, String imageLink, boolean approved) {
         this.idReddit = idReddit;
         this.idUser = idUser;

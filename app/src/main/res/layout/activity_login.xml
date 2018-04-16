@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:labelFor="@+id/et_username"
-        android:text="username:"
+        android:text="@string/label_username"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -30,7 +30,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:labelFor="@+id/et_password"
-        android:text="password:"
+        android:text="@string/label_password"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/et_username" />
 
@@ -47,7 +47,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="onSubmit"
-        android:text="Sign In"
+        android:text="@string/placeholder"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/register_switch"
         app:layout_constraintTop_toBottomOf="@+id/et_password" />
@@ -58,9 +58,19 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:checked="false"
-        android:text="У меня нет аккаунта.\n Зарегистрироваться"
+        android:text="@string/switch_register"
         app:layout_constraintEnd_toStartOf="@+id/btn_sign_in"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/et_password" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:maxLines="3"
+        android:text="@string/label_account_message"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

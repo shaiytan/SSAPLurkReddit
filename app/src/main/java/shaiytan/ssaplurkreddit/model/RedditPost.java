@@ -9,6 +9,7 @@ import com.google.gson.JsonParseException;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 
+//post data to show in feed activity
 public class RedditPost implements Serializable {
     private String id;
     private String title;

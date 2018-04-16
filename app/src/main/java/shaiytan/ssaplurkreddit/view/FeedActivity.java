@@ -12,10 +12,13 @@ import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import retrofit2.Call;
@@ -40,13 +43,15 @@ public class FeedActivity
     public static final String PREF_ID = "current_id";
 
     private RecyclerView feed;
-    private PostsAdapter regularAdapter;
+    private PostsAdapter feedAdapter;
     private PostsAdapter errorAdapter;
     private ItemTouchHelper swipeHelper;
     private SwipeRefreshLayout pullRefresh;
+    private ImageView plus;
+    private ImageView minus;
 
     private SharedPreferences preferences;
-    private PostsDAO posts;
+    private PostsDAO postsDAO;
 
     private long currentUserId;
     private String currentUserName;
@@ -58,23 +63,70 @@ public class FeedActivity
         setContentView(R.layout.activity_feed);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        init();
+        if (preferences.contains(PREF_LOGIN)) {
+            loadSession();
+            refreshFeed();
+        } else showLoginForm();
+    }
+
+    private void init() {
+        plus = findViewById(R.id.img_plus);
+        minus = findViewById(R.id.img_minus);
         errorAdapter = PostsAdapter.error(this);
         feed = findViewById(R.id.feed_list);
         feed.setLayoutManager(new LinearLayoutManager(this));
         swipeHelper = new ItemTouchHelper(new SwipeHelper(this::onSwiped));
         pullRefresh = findViewById(R.id.refresh);
-        pullRefresh.setOnRefreshListener(this::onRefresh);
-        posts = LurkRedditApplication.getDB().postsDAO();
+        pullRefresh.setOnRefreshListener(this::refreshFeed);
+        postsDAO = LurkRedditApplication.getDB().postsDAO();
         preferences = getSharedPreferences(SESSION_PREF, MODE_PRIVATE);
-        if (preferences.contains(PREF_LOGIN)) {
-            loadSession();
-            onRefresh();
-        } else showLoginForm();
     }
 
-    private void onRefresh() {
+    private void showLoginForm() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivityForResult(intent, LOGIN_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_CANCELED) finish();
+        if (resultCode == RESULT_OK) {
+            currentUserId = data.getLongExtra(LoginActivity.RESULT_ID, -1);
+            currentUserName = data.getStringExtra(LoginActivity.RESULT_LOGIN);
+            saveSession();
+            setTitle("@" + currentUserName + ":AWW subreddit");
+            refreshFeed();
+        }
+    }
+
+    // manage session methods
+    private void loadSession() {
+        currentUserId = preferences.getLong(PREF_ID, -1);
+        currentUserName = preferences.getString(PREF_LOGIN, null);
+        setTitle("@" + currentUserName + ":AWW subreddit");
+    }
+
+    private void saveSession() {
+        preferences.edit()
+                .putLong(PREF_ID, currentUserId)
+                .putString(PREF_LOGIN, currentUserName)
+                .apply();
+    }
+
+    private void logOut() {
+        preferences.edit()
+                .remove(PREF_ID)
+                .remove(PREF_LOGIN)
+                .apply();
+        currentUserId = -1;
+        currentUserName = null;
+        showLoginForm();
+    }
+
+    private void refreshFeed() {
         nextPage = "";
-        regularAdapter = PostsAdapter.empty(this, v -> loadFeed());
+        feedAdapter = PostsAdapter.empty(this, v -> loadFeed());
         pullRefresh.setRefreshing(true);
         loadFeed();
     }
@@ -100,46 +152,6 @@ public class FeedActivity
         return true;
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_CANCELED) finish();
-        if (resultCode == RESULT_OK) {
-            currentUserId = data.getLongExtra(LoginActivity.RESULT_ID, -1);
-            currentUserName = data.getStringExtra(LoginActivity.RESULT_LOGIN);
-            saveSession();
-            setTitle("Hi, " + currentUserName + "! It's AWW subreddit");
-            onRefresh();
-        }
-    }
-
-    private void loadSession() {
-        currentUserId = preferences.getLong(PREF_ID, -1);
-        currentUserName = preferences.getString(PREF_LOGIN, null);
-        setTitle("Hi, " + currentUserName + "! It's AWW subreddit");
-    }
-
-    private void saveSession() {
-        preferences.edit()
-                .putLong(PREF_ID, currentUserId)
-                .putString(PREF_LOGIN, currentUserName)
-                .apply();
-    }
-
-    private void logOut() {
-        preferences.edit()
-                .remove(PREF_ID)
-                .remove(PREF_LOGIN)
-                .apply();
-        currentUserId = -1;
-        currentUserName = null;
-        showLoginForm();
-    }
-
-    private void showLoginForm() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        startActivityForResult(intent, LOGIN_REQUEST);
-    }
-
     private void loadFeed() {
         RedditAPI api = LurkRedditApplication.getAPI();
         api.getPosts(nextPage, 25).enqueue(new Callback<RedditPage>() {
@@ -147,28 +159,42 @@ public class FeedActivity
             public void onResponse(@NonNull Call<RedditPage> call, @NonNull Response<RedditPage> response) {
                 RedditPage page = response.body();
                 if (page != null) {
-                    nextPage = page.getAfter();
-                    Set<String> viewed = new HashSet<>(posts.getViewedPostsId(currentUserId));
-                    LinkedList<RedditPost> filteredPosts = new LinkedList<>();
-                    for (RedditPost post : page.getChildren()) {
-                        if (post.isImage() && !viewed.contains(post.getId()))
-                            filteredPosts.add(post);
-                    }
-                    regularAdapter.insertItems(filteredPosts);
-                    if (feed.getAdapter() != regularAdapter) feed.setAdapter(regularAdapter);
-                    swipeHelper.attachToRecyclerView(feed);
+                    showLoadedPosts(page);
                 }
                 pullRefresh.setRefreshing(false);
             }
 
             @Override
             public void onFailure(@NonNull Call<RedditPage> call, @NonNull Throwable t) {
-                Toast.makeText(FeedActivity.this, "Cannot load((9:" + t.getMessage(), Toast.LENGTH_SHORT).show();
                 swipeHelper.attachToRecyclerView(null);
                 feed.setAdapter(errorAdapter);
                 pullRefresh.setRefreshing(false);
+                plus.setVisibility(View.INVISIBLE);
+                minus.setVisibility(View.INVISIBLE);
             }
         });
+    }
+
+    private void showLoadedPosts(RedditPage page) {
+        nextPage = page.getAfter();
+        Set<String> viewed = new HashSet<>(postsDAO.getViewedPostsId(currentUserId));
+        // filter posts - don't show posts that were checked by user
+        // and show only posts with images
+        List<RedditPost> loadedPosts = page.getChildren();
+        List<RedditPost> filteredPosts = new LinkedList<>();
+        for (RedditPost post : loadedPosts) {
+            if (post.isImage() && !viewed.contains(post.getId()))
+                filteredPosts.add(post);
+        }
+        feedAdapter.insertItems(filteredPosts);
+        if (feed.getAdapter() != feedAdapter) feed.setAdapter(feedAdapter);
+        swipeHelper.attachToRecyclerView(feed);
+        plus.setVisibility(View.VISIBLE);
+        minus.setVisibility(View.VISIBLE);
+        // load at least 5 posts
+        // except the case when user is a nolifer-bitard and he loaded whole subreddit
+        if (filteredPosts.size() < 5 && filteredPosts.size() < loadedPosts.size())
+            loadFeed();
     }
 
     public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
@@ -183,6 +209,6 @@ public class FeedActivity
                 approved
         );
         Toast.makeText(this, approved ? "Liked" : "Disliked", Toast.LENGTH_SHORT).show();
-        posts.insertPost(savePost);
+        postsDAO.insertPost(savePost);
     }
 }

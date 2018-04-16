@@ -19,48 +19,26 @@ import shaiytan.ssaplurkreddit.R;
 import shaiytan.ssaplurkreddit.model.RedditPost;
 
 public class PostsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private static final int REGULAR_ITEM_TYPE = 0;
-    private static final int LOAD_MORE_TYPE = 1;
+    static final int REGULAR_ITEM_TYPE = 0;
+    static final int LOAD_MORE_TYPE = 1;
 
     private Context context;
     private List<RedditPost> data;
     private View.OnClickListener loadListener;
 
-    public PostsAdapter(Context context, List<RedditPost> data, View.OnClickListener loadListener) {
+    PostsAdapter(Context context, List<RedditPost> data, View.OnClickListener loadListener) {
         this.context = context;
         this.data = data;
         this.loadListener = loadListener;
     }
 
+    //factory methods for adapters
     public static PostsAdapter empty(Context context, View.OnClickListener listener) {
         return new PostsAdapter(context, new ArrayList<>(), listener);
     }
 
-    @NonNull
-    @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view;
-        if (viewType == REGULAR_ITEM_TYPE) {
-            view = LayoutInflater.from(context)
-                    .inflate(R.layout.item_feed, parent, false);
-            return new ViewHolder(view);
-        } else if (viewType == LOAD_MORE_TYPE) {
-            view = LayoutInflater.from(context)
-                    .inflate(R.layout.item_load, parent, false);
-            return new BottomViewHolder(view, loadListener);
-        } else throw new IllegalArgumentException("Invalid viewType!");
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (holder instanceof ViewHolder) {
-            RedditPost post = data.get(position);
-            ViewHolder regularHolder = (ViewHolder) holder;
-            regularHolder.title.setText(post.getTitle());
-            Picasso.with(context)
-                    .load(post.getImageLink())
-                    .into(regularHolder.image);
-        }
+    public static PostsAdapter error(Context context) {
+        return new ErrorAdapter(context);
     }
 
     @Override
@@ -75,19 +53,35 @@ public class PostsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         return post;
     }
 
+    @NonNull
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view;
+        if (viewType == REGULAR_ITEM_TYPE) {
+            view = LayoutInflater.from(context)
+                    .inflate(R.layout.item_feed, parent, false);
+            return new ItemViewHolder(view);
+        } else if (viewType == LOAD_MORE_TYPE) {
+            view = LayoutInflater.from(context)
+                    .inflate(R.layout.item_load, parent, false);
+            return new LoadMoreViewHolder(view, loadListener);
+        } else throw new IllegalArgumentException("Invalid viewType!");
+    }
+
     @Override
     public int getItemViewType(int position) {
         return position == data.size() ? LOAD_MORE_TYPE : REGULAR_ITEM_TYPE;
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
-        private TextView title;
-        private ImageView image;
-
-        ViewHolder(View itemView) {
-            super(itemView);
-            title = itemView.findViewById(R.id.item_title);
-            image = itemView.findViewById(R.id.item_image);
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (holder instanceof ItemViewHolder) {
+            RedditPost post = data.get(position);
+            ItemViewHolder regularHolder = (ItemViewHolder) holder;
+            regularHolder.title.setText(post.getTitle());
+            Picasso.with(context)
+                    .load(post.getImageLink())
+                    .into(regularHolder.image);
         }
     }
 
@@ -96,18 +90,28 @@ public class PostsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         notifyDataSetChanged();
     }
 
-    static class BottomViewHolder extends RecyclerView.ViewHolder {
-        BottomViewHolder(View itemView, View.OnClickListener listener) {
+    //view holder for regular items - elements of reddit posts list
+    private static class ItemViewHolder extends RecyclerView.ViewHolder {
+        private TextView title;
+        private ImageView image;
+
+        ItemViewHolder(View itemView) {
+            super(itemView);
+            title = itemView.findViewById(R.id.item_title);
+            image = itemView.findViewById(R.id.item_image);
+        }
+    }
+
+    //view holder for the last item - "load more" button
+    private static class LoadMoreViewHolder extends RecyclerView.ViewHolder {
+        LoadMoreViewHolder(View itemView, View.OnClickListener listener) {
             super(itemView);
             Button loadMore = itemView.findViewById(R.id.btn_load_more);
             loadMore.setOnClickListener(listener);
         }
     }
 
-    public static PostsAdapter error(Context context) {
-        return new ErrorAdapter(context);
-    }
-
+    //special adapter that is used when app cannot load data (network unavailable)
     private static class ErrorAdapter extends PostsAdapter {
         private ErrorAdapter(Context context) {
             super(context, null, null);
@@ -115,7 +119,7 @@ public class PostsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            ViewHolder regularHolder = (ViewHolder) holder;
+            ItemViewHolder regularHolder = (ItemViewHolder) holder;
             regularHolder.image.setImageResource(R.drawable.no_internet);
             regularHolder.title.setText(R.string.no_internet_message);
         }

@@ -4,4 +4,11 @@
     <string name="title_activity_checked_posts">Your Checked Posts</string>
     <string name="title_activity_login">Login/Register</string>
     <string name="no_internet_message">Check your internet connection. I cannot load feed without network. Also images from your checked posts may not be cached((9</string>
+    <string name="load_more_message">You are at the end of the universe</string>
+    <string name="button_load_more">Load More</string>
+    <string name="placeholder">Placeholder</string>
+    <string name="label_username">username:</string>
+    <string name="label_password">password:</string>
+    <string name="switch_register">I have no account.\nRegister me.</string>
+    <string name="label_account_message">Don\'t try to use your reddit account.\nThe app has its own.</string>
 </resources>

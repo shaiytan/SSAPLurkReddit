@@ -17,7 +17,15 @@ public class SwipeHelper extends ItemTouchHelper.SimpleCallback {
     }
 
     @Override
+    public int getSwipeDirs(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
+        //don't swipe "load more" button
+        if (viewHolder.getItemViewType() == PostsAdapter.LOAD_MORE_TYPE) return 0;
+        else return super.getSwipeDirs(recyclerView, viewHolder);
+    }
+
+    @Override
     public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+        if (viewHolder.getItemViewType() == PostsAdapter.LOAD_MORE_TYPE) return;
         listener.onSwiped(viewHolder, direction);
     }
 

@@ -6,6 +6,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 
+import java.util.Collections;
 import java.util.List;
 
 import shaiytan.ssaplurkreddit.R;
@@ -24,11 +25,15 @@ public class CheckedPostsActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         RecyclerView feed = findViewById(R.id.feed_list);
         feed.setLayoutManager(new LinearLayoutManager(this));
+
         PostsDAO posts = LurkRedditApplication.getDB().postsDAO();
         long idUser = getIntent().getLongExtra(USER_ID, -1);
+
         List<Post> postsByUser = posts.getPostsByUser(idUser);
+        Collections.reverse(postsByUser);
         feed.setAdapter(new CheckedPostsAdapter(this, postsByUser));
     }
 
