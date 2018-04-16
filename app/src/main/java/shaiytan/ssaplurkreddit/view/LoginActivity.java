@@ -61,17 +61,16 @@ public class LoginActivity extends AppCompatActivity {
                 } catch (SQLiteException e) {
                     Toast.makeText(
                             this,
-                            "User with such login exists. Choose a different one",
+                            "User with such login exists. Choose a different one.",
                             Toast.LENGTH_SHORT)
                             .show();
                 }
-
                 break;
             case SIGN_IN:
                 User user = users.findUserByLogin(username);
                 if (user != null && password.equals(user.getPassword()))
                     finishSuccess(user.getId(), username);
-                else Toast.makeText(this, "Wrong username or password", Toast.LENGTH_SHORT).show();
+                else Toast.makeText(this, "Wrong username or password.", Toast.LENGTH_SHORT).show();
                 break;
         }
     }

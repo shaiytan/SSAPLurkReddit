@@ -40,6 +40,5 @@ public class LurkRedditApplication extends Application {
                 .baseUrl(RedditAPI.BASE_URL)
                 .build();
         api = retrofit.create(RedditAPI.class);
-
     }
 }

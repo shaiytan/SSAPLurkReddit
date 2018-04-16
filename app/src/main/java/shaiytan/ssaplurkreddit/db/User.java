@@ -1,6 +1,7 @@
 package shaiytan.ssaplurkreddit.db;
 
 import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
 
@@ -11,9 +12,10 @@ public class User {
     private String login;
     private String password;
 
-    public User() {
+    User() {
     }
 
+    @Ignore
     public User(String login, String password) {
         this.login = login;
         this.password = password;

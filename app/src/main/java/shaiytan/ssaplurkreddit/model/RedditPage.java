@@ -11,23 +11,18 @@ import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 import java.util.List;
 
+//pojo for parsing json from reddit
 public class RedditPage {
     private String after;
-    private String before;
     private List<RedditPost> children;
 
-    public RedditPage(String after, String before, List<RedditPost> children) {
+    public RedditPage(String after, List<RedditPost> children) {
         this.after = after;
-        this.before = before;
         this.children = children;
     }
 
     public String getAfter() {
         return after;
-    }
-
-    public String getBefore() {
-        return before;
     }
 
     public List<RedditPost> getChildren() {

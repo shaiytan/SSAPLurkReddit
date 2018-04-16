@@ -13,8 +13,8 @@
             android:id="@+id/item_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxLines="5"
-            android:text="Title"
+            android:maxLines="10"
+            android:text="@string/placeholder"
             android:textAlignment="center"
             android:textSize="20sp"
             app:layout_constraintTop_toTopOf="parent" />
